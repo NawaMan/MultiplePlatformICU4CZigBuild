@@ -12,24 +12,23 @@ ENV WORKDIR=/workdir
 # Install dependencies
 RUN apt-get update -qq && \
     apt-get install -y \
-    autoconf \
-    automake \
-    build-essential \
-    cmake \
-    curl \
-    g++-multilib \
-    gcc-multilib \
-    gnupg \
-    lsb-release \
-    pkg-config \
-    python3 \
+    bash        \
+    curl        \
+    file        \
+    jq          \
+    less        \
+    man         \
+    manpages    \
+    nano        \
+    python3     \
     python3-pip \
-    software-properties-common \
-    unzip \
-    wget \
-    zip \
-    bash \
-    sudo && \
+    sudo        \
+    tree        \
+    unzip       \
+    wget        \
+    xmlstarlet  \
+    zip         \
+    &&          \
     rm -rf /var/lib/apt/lists/*
 
 # Install Jupyter and Bash kernel
