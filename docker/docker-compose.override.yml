@@ -1,0 +1,6 @@
+services:
+  icu4c-builder:
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_PORT=8888
