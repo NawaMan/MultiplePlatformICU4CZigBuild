@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SHOULD_BUILD=${1:-'--skip-build'}
+SHOULD_BUILD=${1:-''}
 echo $SHOULD_BUILD
 
 IMAGE_NAME=mpicu4zb-test-linux-x86
@@ -17,7 +17,9 @@ fi
 
 echo 
 echo 
-docker run -it "$IMAGE_NAME"
+docker compose up $SHOULD_BUILD --detach
+docker exec -it mpicu4zb-test-linux-x86 bash
+docker compose down
 
 echo 
 echo 
