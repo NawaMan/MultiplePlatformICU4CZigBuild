@@ -18,21 +18,24 @@ RUN apt-get update && apt-get install -y \
     gcc-multilib     \
     libfmt-dev       \
     libstdc++-10-dev \
+    nano             \
     sudo             \
     tree             \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy build related files
 COPY in-docker/ensure-test-build-environment.sh /workdir/ensure-test-build-environment.sh
-COPY in-docker/compile-simple-test.sh           /workdir/compile-simple-test.sh
-COPY sh-sources                                 /workdir/sh-sources
-COPY icu4c-library                              /workdir/icu4c-library
-COPY versions.env                               /workdir/versions.env
-COPY install-zig.sh                             /workdir/install-zig.sh
-COPY console.hpp                                /workdir/console.hpp
-COPY simple-test.cpp                            /workdir/simple-test.cpp
+COPY ignored/sh-sources                         /workdir/sh-sources
+COPY ignored/versions.env                       /workdir/versions.env
+COPY ignored/install-zig.sh                     /workdir/install-zig.sh
 
 WORKDIR ${WORKDIR}
-
 RUN /workdir/ensure-test-build-environment.sh
+
+# Copy test related files.
+COPY in-docker/compile-simple-test.sh /workdir/compile-simple-test.sh
+COPY ignored/icu4c-library            /workdir/icu4c-library
+COPY ignored/console.hpp              /workdir/console.hpp
+COPY ignored/simple-test.cpp          /workdir/simple-test.cpp
 
 ENTRYPOINT ["/bin/bash"]

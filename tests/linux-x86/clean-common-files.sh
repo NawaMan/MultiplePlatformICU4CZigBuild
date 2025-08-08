@@ -6,9 +6,9 @@ function remove() {
     rm -Rf "$FILE"
 }
 
-remove icu4c-library
-remove sh-sources
-remove *.cpp
-remove *.hpp
-remove install-zig.sh
-remove versions.env
+remove ignored/icu4c-library
+remove ignored/sh-sources
+remove ignored/*.cpp
+remove ignored/*.hpp
+remove ignored/install-zig.sh
+remove ignored/versions.env

@@ -14,9 +14,10 @@ function copy-file() {
     cp "$SRC" "$TGT"
 }
 
-copy-dir  ../../build/icu4c-target icu4c-library
-copy-dir  ../../sh-sources         sh-sources
-copy-file ../*.cpp                 .
-copy-file ../*.hpp                 .
-copy-file ../../install-zig.sh     .
-copy-file ../../versions.env       .
+mkdir -p ignored
+copy-dir  ../../build/icu4c-target ignored/icu4c-library
+copy-dir  ../../sh-sources         ignored/sh-sources
+copy-file ../*.cpp                 ignored/
+copy-file ../*.hpp                 ignored/
+copy-file ../../install-zig.sh     ignored/
+copy-file ../../versions.env       ignored/
