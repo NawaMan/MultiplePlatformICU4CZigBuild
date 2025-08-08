@@ -6,15 +6,13 @@ source sh-sources/common-source.sh
 
 print_section "Installing dependencies"
 
-apt-get update -qq
-apt-get install -y             \
+sudo apt-get update -qq
+sudo apt-get install -y        \
     autoconf                   \
     automake                   \
     build-essential            \
     cmake                      \
     curl                       \
-    g++-multilib               \
-    gcc-multilib               \
     gnupg                      \
     lsb-release                \
     pkg-config                 \

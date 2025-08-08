@@ -53,6 +53,11 @@ exec jupyter notebook \\\n\
   chmod +x /usr/local/bin/start-jupyter.sh && \
   chown ubuntu:ubuntu /usr/local/bin/start-jupyter.sh
 
+# Add environment variables to bashrc
+RUN mkdir -p "/workdir/build" && \
+    echo 'export BUILD_LOG="/workdir/build/build.log"' >> /home/ubuntu/.bashrc && \
+    chown ubuntu:ubuntu /home/ubuntu/.bashrc
+
 # ✅ Allow passwordless sudo for ubuntu and set bash as default shell
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     chsh -s /bin/bash ubuntu

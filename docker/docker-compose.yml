@@ -9,7 +9,6 @@ services:
     container_name: icu4c-builder
     volumes:
       - ../:/workdir
-      - ../host/source:/workdir/source
       - ../dist:/workdir/dist
       - ../notebooks:/workdir/notebooks
       - ../shared:/workdir/shared
