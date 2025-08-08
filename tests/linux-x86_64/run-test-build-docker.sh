@@ -19,7 +19,7 @@ echo
 echo 
 
 docker compose up $SHOULD_BUILD --detach
-docker exec -it mpicu4zb-test-linux-x86 bash
+docker exec -it mpicu4zb-test-linux-x86_64 bash
 docker compose down
 
 echo 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-INC_DIR=icu4c-library/linux-x86/include
-LIB_DIR=icu4c-library/linux-x86/lib
+INC_DIR=icu4c-library/linux-x86_64/include
+LIB_DIR=icu4c-library/linux-x86_64/lib
 
 zig c++          \
     -std=c++20   \

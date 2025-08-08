@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mpicu4zb-test-linux-x86:latest
-    container_name: mpicu4zb-test-linux-x86
+    image: mpicu4zb-test-linux-x86_64:latest
+    container_name: mpicu4zb-test-linux-x86_64
     volumes:
       - ./in-docker/compile-simple-test.sh:/workdir/compile-simple-test.sh
       - ../../build/icu4c-target:/workdir/icu4c-library
