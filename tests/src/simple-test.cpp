@@ -8,25 +8,25 @@
 
 // For ICU functionality
 #include <unicode/uvernum.h>
-// #include <unicode/uversion.h>
-// #include <unicode/unistr.h>
-// #include <unicode/ucnv.h>
-// #include <unicode/ubrk.h>
-// #include <unicode/translit.h>
-// #include <unicode/locid.h>
-// #include <unicode/numfmt.h>
-// #include <unicode/calendar.h>
-// #include <unicode/datefmt.h>
-// #include <unicode/brkiter.h>
-// #include <unicode/uclean.h>
-// #include <unicode/udata.h>
-// #include <unicode/ucal.h>
-// #include <unicode/uchar.h>
-// #include <unicode/ures.h>
-// #include <unicode/coll.h>
-// #include <unicode/resbund.h>
+#include <unicode/uversion.h>
+#include <unicode/unistr.h>
+#include <unicode/ucnv.h>
+#include <unicode/ubrk.h>
+#include <unicode/translit.h>
+#include <unicode/locid.h>
+#include <unicode/numfmt.h>
+#include <unicode/calendar.h>
+#include <unicode/datefmt.h>
+#include <unicode/brkiter.h>
+#include <unicode/uclean.h>
+#include <unicode/udata.h>
+#include <unicode/ucal.h>
+#include <unicode/uchar.h>
+#include <unicode/ures.h>
+#include <unicode/coll.h>
+#include <unicode/resbund.h>
 
-// // Example 1: Unicode string operations
+// Example 1: Unicode string operations
 // void runStringExample() {
 //     println();
 //     println("=== Running Unicode String Example ===");
@@ -343,7 +343,7 @@ int main() {
     // Print ICU version
     println("ICU Version: {}", U_ICU_VERSION);
 
-    // // Run the string example
+    // Run the string example
     // runStringExample();
     // runLocaleExample();
     // runBreakIteratorExample();

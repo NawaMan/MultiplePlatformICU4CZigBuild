@@ -1,0 +1,14 @@
+services:
+  icu4c-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mpicu4zb-test-linux-x86:latest
+    container_name: mpicu4zb-test-linux-x86
+    volumes:
+      - ./in-docker/compile-simple-test.sh:/workdir/compile-simple-test.sh
+      - ../../build/icu4c-target:/workdir/icu4c-library
+      - ../src:/workdir/src
+    working_dir: /workdir
+    tty: true
+    stdin_open: true

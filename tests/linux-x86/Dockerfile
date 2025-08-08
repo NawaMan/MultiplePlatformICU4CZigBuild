@@ -23,19 +23,16 @@ RUN apt-get update && apt-get install -y \
     tree             \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR ${WORKDIR}
+
 # Copy build related files
 COPY in-docker/ensure-test-build-environment.sh /workdir/ensure-test-build-environment.sh
 COPY ignored/sh-sources                         /workdir/sh-sources
-COPY ignored/versions.env                       /workdir/versions.env
 COPY ignored/install-zig.sh                     /workdir/install-zig.sh
-
-WORKDIR ${WORKDIR}
-RUN /workdir/ensure-test-build-environment.sh
-
-# Copy test related files.
-COPY in-docker/compile-simple-test.sh /workdir/compile-simple-test.sh
-COPY ignored/icu4c-library            /workdir/icu4c-library
-COPY ignored/console.hpp              /workdir/console.hpp
-COPY ignored/simple-test.cpp          /workdir/simple-test.cpp
+COPY ignored/versions.env                       /workdir/versions.env
+RUN  /workdir/ensure-test-build-environment.sh
+RUN  rm -Rf /workdir/ensure-test-build-environment.sh
+RUN  rm -Rf /workdir/sh-sources
+RUN  rm -Rf /workdir/install-zig.sh
 
 ENTRYPOINT ["/bin/bash"]

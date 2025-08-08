@@ -2,7 +2,7 @@
 
 zig c++                               \
     -std=c++20                        \
-    *.cpp                             \
+    src/*.cpp                         \
     -I.                               \
     -Iicu4c-library/linux-x86/include \
     -lfmt                             \
