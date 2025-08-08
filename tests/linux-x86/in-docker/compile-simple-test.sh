@@ -1,9 +1,16 @@
 #!/bin/bash
 
-zig c++                               \
-    -std=c++20                        \
-    src/*.cpp                         \
-    -I.                               \
-    -Iicu4c-library/linux-x86/include \
-    -lfmt                             \
+INC_DIR=icu4c-library/linux-x86/include
+LIB_DIR=icu4c-library/linux-x86/lib
+
+zig c++          \
+    -std=c++20   \
+    src/*.cpp    \
+    -I.          \
+    -I"$INC_DIR" \
+    -L"$LIB_DIR" \
+    -licuuc      \
+    -licui18n    \
+    -licudata    \
+    -licuio      \
     -o simple-test
