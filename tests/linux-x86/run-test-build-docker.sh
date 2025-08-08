@@ -17,11 +17,13 @@ fi
 
 echo 
 echo 
+
 docker compose up $SHOULD_BUILD --detach
 docker exec -it mpicu4zb-test-linux-x86 bash
 docker compose down
 
 echo 
 echo 
+
 echo "Post build clean up."
 ./clean-common-files.sh

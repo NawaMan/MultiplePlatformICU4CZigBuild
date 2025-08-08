@@ -26,7 +26,7 @@
 #include <unicode/coll.h>
 #include <unicode/resbund.h>
 
-// Example 1: Unicode string operations
+// // Example 1: Unicode string operations
 // void runStringExample() {
 //     println();
 //     println("=== Running Unicode String Example ===");
