@@ -22,15 +22,17 @@ RUN apt-get update && apt-get install -y \
     tree             \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ensure-linux-x86-64-build-test-environment.sh /workdir/ensure-linux-x86-64-build-test-environment.sh
-COPY sh-sources                                    /workdir/sh-sources
-COPY icu4c-library                                 /workdir/icu4c-library
-COPY versions.env                                  /workdir/versions.env
-COPY install-zig.sh                                /workdir/install-zig.sh
-COPY compile-simple-test.sh                        /workdir/compile-simple-test.sh
-COPY console.hpp                                   /workdir/console.hpp
-COPY simple-test.cpp                               /workdir/simple-test.cpp
+COPY in-docker/ensure-test-build-environment.sh /workdir/ensure-test-build-environment.sh
+COPY in-docker/compile-simple-test.sh           /workdir/compile-simple-test.sh
+COPY sh-sources                                 /workdir/sh-sources
+COPY icu4c-library                              /workdir/icu4c-library
+COPY versions.env                               /workdir/versions.env
+COPY install-zig.sh                             /workdir/install-zig.sh
+COPY console.hpp                                /workdir/console.hpp
+COPY simple-test.cpp                            /workdir/simple-test.cpp
 
 WORKDIR ${WORKDIR}
+
+RUN /workdir/ensure-test-build-environment.sh
 
 ENTRYPOINT ["/bin/bash"]

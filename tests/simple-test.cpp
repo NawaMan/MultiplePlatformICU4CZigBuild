@@ -1,14 +1,14 @@
 #include <iostream>
 #include <string>
 #include <sstream>
- #include <format>
+// #include <format>
 
-// // Platform-specific include for console functionality
-// #ifdef _WIN32
-// #include "console_windows.hpp"  // Windows version without fmt dependency
-// #else
+// Platform-specific include for console functionality
+#ifdef _WIN32
+#include "console_windows.hpp"  // Windows version without fmt dependency
+#else
 #include "console.hpp"         // Linux version with fmt library
-// #endif
+#endif
 
 #define println console::println
 
@@ -345,7 +345,7 @@
 // }
 
 int main() {
-    // Print ICU version
+    // // Print ICU version
     // println("ICU Version: {}", U_ICU_VERSION);
 
     // // Run the string example
