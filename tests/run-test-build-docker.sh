@@ -15,9 +15,16 @@ else
     echo "Skip docker image build."
 fi
 
+# Prepare the `dist` folder.
+mkdir -p dist
+chown -R $(id -u):$(id -g) dist
+chmod -R ug+rwX dist
+
 echo 
 echo 
 
+export UID
+export GID=$(id -g)
 docker compose up $SHOULD_BUILD --detach
 docker exec -it mpicu4zb-test-linux-x86_64 bash
 docker compose down

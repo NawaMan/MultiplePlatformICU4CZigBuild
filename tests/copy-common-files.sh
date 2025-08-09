@@ -15,7 +15,7 @@ function copy-file() {
 }
 
 mkdir -p ignored
-copy-dir  ../../build/icu4c-target ignored/icu4c-library
-copy-dir  ../../sh-sources         ignored/sh-sources
-copy-file ../../install-zig.sh     ignored/
-copy-file ../../versions.env       ignored/
+copy-dir  ../build/icu4c-target ignored/icu4c-library
+copy-dir  ../sh-sources         ignored/sh-sources
+copy-file ../install-zig.sh     ignored/
+copy-file ../versions.env       ignored/

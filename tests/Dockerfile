@@ -12,8 +12,10 @@ ENV WORKDIR=/workdir
 # Install bash
 RUN apt-get update && apt-get install -y \
     bash             \
+    binutils         \
     build-essential  \
     curl             \
+    file             \
     g++-multilib     \
     gcc-multilib     \
     libfmt-dev       \
