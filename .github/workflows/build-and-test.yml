@@ -53,12 +53,15 @@ jobs:
             echo 
             echo "./build.sh $(pwd)"
             ./build.sh $(pwd)
+
             echo 
-            echo "tree -L 3 dist/icu4c-library"
-            tree -L 3 dist/icu4c-library
+            echo "tree -L 3 build/icu4c-target"
+            tree -L 3 build/icu4c-target
+
             echo 
             echo "./package.sh $(pwd)"
             ./package.sh $(pwd)
+
             echo 
             echo "tree -L 3 dist/icu4c-library"
             tree -L 3 dist/icu4c-library
@@ -66,7 +69,7 @@ jobs:
       - name: Upload test artifact
         uses: actions/upload-artifact@v4
         with:
-          name: icu4c-target
-          path: build/icu4c-target
+          name: icu4c-library
+          path: dist/icu4c-library
           if-no-files-found: error
           retention-days: 1
