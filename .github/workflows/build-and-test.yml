@@ -24,3 +24,16 @@ jobs:
             echo "Yo!"
             pwd
             ls -la
+            chmod +x *.sh
+            echo 
+            echo "./ensure-linux-x86-64-build-environment.sh"
+            ./ensure-linux-x86-64-build-environment.sh
+            echo 
+            echo "./install-zig.sh"
+            ./install-zig.sh
+            echo 
+            echo "./prepare-icu4c-source.sh"
+            ./prepare-icu4c-source.sh
+            echo 
+            echo "./build.sh"
+            ./build.sh
