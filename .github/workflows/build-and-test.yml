@@ -45,14 +45,8 @@ jobs:
             ls -la
             chmod +x *.sh
             echo 
-            echo "./ensure-linux-x86-64-build-environment.sh"
-            ./in-docker/ensure-linux-x86-64-build-environment.sh
-            echo 
-            echo "./install-zig.sh"
-            ./in-docker/install-zig.sh
-            echo 
-            echo "./prepare-icu4c-source.sh"
-            ./in-docker/prepare-icu4c-source.sh
+            echo "./init-setup.sh"
+            ./init-setup.sh
             echo 
             echo "tree -L 3 build"
             tree -L 3 build

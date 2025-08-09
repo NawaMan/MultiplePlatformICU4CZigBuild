@@ -28,10 +28,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR ${WORKDIR}
 
 # Copy build related files
-COPY in-docker/ensure-test-build-environment.sh /workdir/ensure-test-build-environment.sh
-COPY ignored/sh-sources                         /workdir/sh-sources
-COPY ignored/install-zig.sh                     /workdir/install-zig.sh
-COPY ignored/versions.env                       /workdir/versions.env
+COPY  ensure-test-build-environment.sh  /workdir/ensure-test-build-environment.sh
+COPY  ignored/sh-sources                /workdir/sh-sources
+COPY  ignored/install-zig.sh            /workdir/install-zig.sh
+COPY  ignored/versions.env              /workdir/versions.env
 RUN  /workdir/ensure-test-build-environment.sh
 RUN  rm -Rf /workdir/ensure-test-build-environment.sh
 RUN  rm -Rf /workdir/sh-sources

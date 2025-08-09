@@ -38,6 +38,7 @@ BUILD_DIR=$WORK_DIR/build
 #     sbin/**
 
 
+TARGET_DIR=$WORK_DIR/build/icu4c-target
 TARGET_LIB=$WORK_DIR/dist/icu4c-library
 mkdir -p "$TARGET_LIB/common/include"
 mkdir -p "$TARGET_LIB/common/share"

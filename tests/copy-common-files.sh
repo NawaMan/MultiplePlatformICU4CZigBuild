@@ -20,6 +20,6 @@ function copy-file() {
 }
 
 mkdir -p ignored
-copy-dir   ../sh-sources                ignored/sh-sources
-copy-file  ../in-docker/install-zig.sh  ignored/
-copy-file  ../versions.env              ignored/
+copy-dir   ../sh-sources      ignored/sh-sources
+copy-file  ../install-zig.sh  ignored/
+copy-file  ../versions.env    ignored/
