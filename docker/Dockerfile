@@ -43,13 +43,15 @@ RUN mkdir -p ${WORKDIR} ${HOME}/.local/share/jupyter/runtime && \
 RUN echo '#!/bin/bash\n\
 mkdir -p "$HOME/.local/share/jupyter/runtime"\n\
 chown -R "$(id -u):$(id -g)" "$HOME/.local"\n\
-exec jupyter notebook \\\n\
-  --ip=0.0.0.0 \\\n\
-  --port=${JUPYTER_PORT:-8888} \\\n\
-  --no-browser \\\n\
-  --NotebookApp.token="" \\\n\
-  --NotebookApp.password="" \\\n\
-  --notebook-dir=/workdir/notebooks' > /usr/local/bin/start-jupyter.sh && \
+exec jupyter notebook                        \\\n\
+  --ip=0.0.0.0                               \\\n\
+  --port=${JUPYTER_PORT:-8888}               \\\n\
+  --no-browser                               \\\n\
+  --NotebookApp.token=""                     \\\n\
+  --NotebookApp.password=""                  \\\n\
+  --notebook-dir=/workdir/notebooks          \\\n\ 
+  --ServerApp.websocket_ping_interval=30000  \\\n\
+  --ServerApp.websocket_ping_timeout=30000'  > /usr/local/bin/start-jupyter.sh && \
   chmod +x /usr/local/bin/start-jupyter.sh && \
   chown ubuntu:ubuntu /usr/local/bin/start-jupyter.sh
 

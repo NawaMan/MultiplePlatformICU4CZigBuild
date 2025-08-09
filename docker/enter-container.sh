@@ -9,7 +9,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Create required directories if they don't exist
 mkdir -p "${PROJECT_ROOT}/host/source"
-mkdir -p "${PROJECT_ROOT}/dist"
+# mkdir -p "${PROJECT_ROOT}/dist"
 
 # Check if the container is already running
 if [ "$(docker ps -q -f name=icu4c-builder)" ]; then

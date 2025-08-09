@@ -4,12 +4,17 @@ cd docker
 
 PORT="${PORT:-8888}"
 
-# Create required folders
-mkdir -p ../notebooks ../shared ../ignored
-
 # Export UID and GID
 export UID=$(id -u)
 export GID=$(id -g)
+
+# Create required folders
+mkdir -p ../notebooks ../shared ../ignored
+
+DIST=../dist
+mkdir -p "$DIST"
+chown -R $(id -u):$(id -g) "$DIST"
+chmod -R ug+rwX "$DIST"
 
 # Generate override for port and env
 cat <<EOF > docker-compose.override.yml

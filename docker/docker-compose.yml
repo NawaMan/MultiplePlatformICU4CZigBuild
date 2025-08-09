@@ -1,22 +1,23 @@
-version: '3'
-
 services:
   icu4c-builder:
+    image: icu4c-universal-static-bundle:latest
+    container_name: icu4c-builder
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    image: icu4c-universal-static-bundle:latest
-    container_name: icu4c-builder
-    volumes:
-      - ../:/workdir
-      - ../dist:/workdir/dist
-      - ../notebooks:/workdir/notebooks
-      - ../shared:/workdir/shared
-      - ../ignored:/workdir/ignored
-    working_dir: /workdir
-    tty: true
-    stdin_open: true
+    user: "${UID}:${GID}"
     environment:
+      - HOST_UID=${UID}
+      - HOST_GID=${GID}
       - JUPYTER_PORT=${PORT:-8888}
     ports:
       - "${PORT:-8888}:8888"
+    volumes:
+      - ../:/workdir
+      - ../notebooks:/workdir/notebooks
+      - ../shared:/workdir/shared
+      - ../ignored:/workdir/ignored
+      - ../dist:/workdir/dist
+    working_dir: /workdir
+    tty: true
+    stdin_open: true
