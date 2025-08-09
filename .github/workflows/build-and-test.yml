@@ -1,0 +1,24 @@
+name: Build and Test ICU4C with Zig
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+
+jobs:
+  build-library-linux:
+    name: Build (Linux x86-64 + Arm-64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set non-interactive frontend
+        run: echo 'DEBIAN_FRONTEND=noninteractive' >> $GITHUB_ENV
+
+      - name: Run on x86-64
+        run: |
+            echo "Yo!"
