@@ -26,7 +26,7 @@ echo
 export UID
 export GID=$(id -g)
 docker compose up $SHOULD_BUILD --detach
-docker exec -it mpicu4zb-test-linux-x86_64 bash
+docker exec -it mpicu4zb-test-linux-x86_64 /workdir/compile-run-simple-test.all.sh
 docker compose down
 
 echo 

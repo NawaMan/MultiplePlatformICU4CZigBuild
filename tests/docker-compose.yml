@@ -12,6 +12,7 @@ services:
     volumes:
       - ../build/icu4c-target:/workdir/icu4c-library
       - ./in-docker/compile-simple-test-all.sh:/workdir/compile-simple-test-all.sh
+      - ./in-docker/compile-run-simple-test.all.sh:/workdir/compile-run-simple-test.all.sh
       - ./src:/workdir/src
       - ./dist:/workdir/dist
     working_dir: /workdir
