@@ -93,21 +93,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: icu4c-library
-          path: dist
+          path: icu4c-library
 
       - name: Show tree
         run: tree
 
-      - name: Show tree dist
-        run: tree dist
-
-      - name: Run on x86-64
+      - name: Build test
         run: |
           pushd tests
-
           chmod +x *.sh
-          ls -la 
-          tree
-
+          ./compile-simple-test-all.sh
           popd
           
