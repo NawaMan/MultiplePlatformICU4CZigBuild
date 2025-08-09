@@ -54,14 +54,14 @@ jobs:
             echo "./build.sh $(pwd)"
             ./build.sh $(pwd)
             echo 
-            echo "tree -L 3 build/icu4c-target"
-            tree -L 3 build/icu4c-target
+            echo "tree -L 3 dist/icu4c-library"
+            tree -L 3 dist/icu4c-library
             echo 
             echo "./package.sh $(pwd)"
             ./package.sh $(pwd)
             echo 
-            echo "tree -L 3 build/icu4c-library"
-            tree -L 3 build/icu4c-library
+            echo "tree -L 3 dist/icu4c-library"
+            tree -L 3 dist/icu4c-library
 
       - name: Upload test artifact
         uses: actions/upload-artifact@v4
