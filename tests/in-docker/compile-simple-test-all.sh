@@ -7,7 +7,7 @@ function build-test() {
 
     OSNAME=${OS}
 
-    INC_DIR=icu4c-library/${OSNAME}-${ARC}_${BIT}/include
+    INC_DIR=icu4c-library/common/include
     LIB_DIR=icu4c-library/${OSNAME}-${ARC}_${BIT}/lib
 
     TARGET=${ARC}_${BIT} ; [ "$TARGET" = "arm_64" ] && TARGET=aarch64
