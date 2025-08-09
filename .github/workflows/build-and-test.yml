@@ -22,3 +22,5 @@ jobs:
       - name: Run on x86-64
         run: |
             echo "Yo!"
+            pwd
+            ls -la
