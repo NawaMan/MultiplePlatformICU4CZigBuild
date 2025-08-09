@@ -6,7 +6,7 @@ services:
     image: mpicu4zb-test-linux-x86_64:latest
     container_name: mpicu4zb-test-linux-x86_64
     volumes:
-      - ./in-docker/compile-simple-test.sh:/workdir/compile-simple-test.sh
+      - ./in-docker/compile-simple-test-all.sh:/workdir/compile-simple-test-all.sh
       - ../../build/icu4c-target:/workdir/icu4c-library
       - ../src:/workdir/src
     working_dir: /workdir

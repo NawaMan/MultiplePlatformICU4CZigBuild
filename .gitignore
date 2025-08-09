@@ -1,9 +1,3 @@
-/docker/ignored/
+/**/ignored
 
 build/
-
-tests/linux-x86/icu4c-library/
-
-tests/linux-x86/sh-sources/
-
-tests/linux-x86/ignored/
