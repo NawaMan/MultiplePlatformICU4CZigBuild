@@ -9,6 +9,7 @@ services:
       - ./in-docker/compile-simple-test-all.sh:/workdir/compile-simple-test-all.sh
       - ../../build/icu4c-target:/workdir/icu4c-library
       - ../src:/workdir/src
+      - ../dist:/workdir/dist
     working_dir: /workdir
     tty: true
     stdin_open: true

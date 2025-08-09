@@ -27,7 +27,7 @@ function build-test() {
         -licuio         \
         -pthread        \
         -ldl            \
-        -o simple-test-${TARGET}
+        -o dist/simple-test-${TARGET}
 }
 
 for OS in linux ; do
