@@ -69,7 +69,7 @@ jobs:
             echo "tree -L 3 dist/icu4c-library"
             tree -L 3 dist/icu4c-library
 
-      - name: Upload test artifact
+      - name: Upload libray artifact
         uses: actions/upload-artifact@v4
         with:
           name: icu4c-library
@@ -78,7 +78,7 @@ jobs:
           retention-days: 1
 
   # Build Test
-  build-test-:
+  build-test:
     name: Build Test
     needs: build-library
     runs-on: ubuntu-latest
@@ -104,4 +104,64 @@ jobs:
           chmod +x *.sh
           ./compile-simple-test-all.sh
           popd
-          
+
+      - name: Show tree dist
+        run: tests/dist
+
+      - name: Upload test program
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-dist
+          path: tests/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  # Run Test - Linux x86
+  run-test-linux-x86:
+    name: Run Test Linux x86
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set non-interactive frontend
+        run: echo 'DEBIAN_FRONTEND=noninteractive' >> $GITHUB_ENV
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: tests/dist
+
+      - name: Show tree
+        run: tree
+
+      - name: Build test
+        run: |
+          ./tests/dist/simple-test-x86_64-linux
+
+  # Run Test - Linux ARM64
+  run-test-linux-arm64:
+    name: Run Test Linux ARM64
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set non-interactive frontend
+        run: echo 'DEBIAN_FRONTEND=noninteractive' >> $GITHUB_ENV
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: tests/dist
+
+      - name: Show tree
+        run: tree
+
+      - name: Build test
+        run: |
+          ./tests/dist/simple-test-aarch64-linux
