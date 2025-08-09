@@ -93,7 +93,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: icu4c-library
-          path: icu4c-library
+          path: tests/icu4c-library
 
       - name: Show tree
         run: tree
@@ -108,8 +108,8 @@ jobs:
           ./compile-simple-test-all.sh
           popd
 
-      - name: Show tree dist
-        run: tests/dist
+      - name: Show tree tests
+        run: tree tests
 
       - name: Upload test program
         uses: actions/upload-artifact@v4
@@ -135,14 +135,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tests-dist
-          path: tests/dist
+          path: dist
 
       - name: Show tree
         run: tree
 
+      - name: Show files
+        run: ls -la ./dist
+
       - name: Build test
         run: |
-          ./tests/dist/simple-test-x86_64-linux
+          ./dist/simple-test-x86_64-linux
 
   # Run Test - Linux ARM64
   run-test-linux-arm64:
@@ -160,11 +163,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tests-dist
-          path: tests/dist
+          path: dist
 
       - name: Show tree
         run: tree
 
+      - name: Show files
+        run: ls -la ./dist
+
       - name: Build test
         run: |
-          ./tests/dist/simple-test-aarch64-linux
+          ./dist/simple-test-aarch64-linux

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+DIST=dist
+mkdir -p $DIST
+
 function build-test() {
     OS=$1
     ARC=$2
@@ -31,7 +34,7 @@ function build-test() {
         -licuio              \
         -pthread             \
         -ldl                 \
-        -o dist/simple-test-${TARGET}
+        -o $DIST/simple-test-${TARGET}
 
     echo "Building for $TARGET completed."
     echo 
