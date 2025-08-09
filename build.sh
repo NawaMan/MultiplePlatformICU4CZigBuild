@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUILD_DIR=/workdir/build
+WORK_DIR=${1:-/workdir}
+
+BUILD_DIR=$WORK_DIR/build
 SOURCE_DIR=$BUILD_DIR/icu4c-source
 TARGET_DIR=$BUILD_DIR/icu4c-target
 LIB_DIR=$(zig env | jq -r '.lib_dir')

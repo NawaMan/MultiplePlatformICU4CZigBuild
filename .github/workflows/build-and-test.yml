@@ -35,5 +35,8 @@ jobs:
             echo "./prepare-icu4c-source.sh"
             ./prepare-icu4c-source.sh
             echo 
+            echo "tree -L 3 build"
+            tree -L 3 build
+            echo 
             echo "./build.sh"
-            ./build.sh
+            ./build.sh .
