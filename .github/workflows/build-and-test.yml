@@ -9,8 +9,8 @@ on:
 
 
 jobs:
-  build-library-linux:
-    name: Build (Linux x86-64 + Arm-64)
+  build-library:
+    name: Build library
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,7 +19,7 @@ jobs:
       - name: Set non-interactive frontend
         run: echo 'DEBIAN_FRONTEND=noninteractive' >> $GITHUB_ENV
 
-      - name: Run on x86-64
+      - name: Setup
         run: |
             sudo apt-get update -qq
             sudo apt-get install -y \
@@ -40,29 +40,32 @@ jobs:
               xmlstarlet  \
               zip
 
-            echo "Yo!"
-            pwd
-            ls -la
             chmod +x *.sh
             echo 
             echo "./init-setup.sh"
             ./init-setup.sh
-            echo 
-            echo "tree -L 3 build"
+
+      - name: Inspace build
+        run: |
             tree -L 3 build
-            echo 
+
+      - name: Build the library
+        run: |
             echo "./build.sh $(pwd)"
             ./build.sh $(pwd)
 
-            echo 
+      - name: Inspace target
+        run: |
             echo "tree -L 3 build/icu4c-target"
             tree -L 3 build/icu4c-target
 
-            echo 
+      - name: Package
+        run: |
             echo "./package.sh $(pwd)"
             ./package.sh $(pwd)
 
-            echo 
+      - name: Inspect dist
+        run: |
             echo "tree -L 3 dist/icu4c-library"
             tree -L 3 dist/icu4c-library
 
@@ -73,3 +76,38 @@ jobs:
           path: dist/icu4c-library
           if-no-files-found: error
           retention-days: 1
+
+  # Build Test
+  build-test-:
+    name: Build Test
+    needs: build-library
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set non-interactive frontend
+        run: echo 'DEBIAN_FRONTEND=noninteractive' >> $GITHUB_ENV
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: icu4c-library
+          path: dist
+
+      - name: Show tree
+        run: tree
+
+      - name: Show tree dist
+        run: tree dist
+
+      - name: Run on x86-64
+        run: |
+          pushd tests
+
+          chmod +x *.sh
+          ls -la 
+          tree
+
+          popd
+          
