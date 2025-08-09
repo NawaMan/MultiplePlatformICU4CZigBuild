@@ -21,6 +21,25 @@ jobs:
 
       - name: Run on x86-64
         run: |
+            sudo apt-get update -qq
+            sudo apt-get install -y \
+              bash        \
+              curl        \
+              file        \
+              jq          \
+              less        \
+              man         \
+              manpages    \
+              nano        \
+              python3     \
+              python3-pip \
+              sudo        \
+              tree        \
+              unzip       \
+              wget        \
+              xmlstarlet  \
+              zip
+
             echo "Yo!"
             pwd
             ls -la
@@ -38,5 +57,5 @@ jobs:
             echo "tree -L 3 build"
             tree -L 3 build
             echo 
-            echo "./build.sh"
-            ./build.sh .
+            echo "./build.sh $(pwd)"
+            ./build.sh $(pwd)
