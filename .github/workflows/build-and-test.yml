@@ -98,6 +98,9 @@ jobs:
       - name: Show tree
         run: tree
 
+      - name: Setup
+        run: ./install-zig.sh
+
       - name: Build test
         run: |
           pushd tests
