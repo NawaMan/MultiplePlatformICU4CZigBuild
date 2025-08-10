@@ -4,17 +4,20 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  build.sh [--workdir PATH] [--target TARGET_ID]
+  build.sh [--workdir PATH] [--target TARGET_ID] [--macos-sdk PATH] [--macos-min N]
 
 Options:
   -w, --workdir PATH     Working root (default: /workdir)
-  -t, --target  ID       Target to build: linux-x86 | linux-arm | all (default: all)
+  -t, --target  ID       Target to build: linux-x86 | linux-arm | mac-x86 | mac-arm | mac-universal | all (default: all)
+  -s, --macos-sdk PATH   Path to macOS SDK (default: $WORKDIR/ignored/MacOSX13.3.sdk)
+  -m, --macos-min N      Minimum macOS version (default: 11.0)
   -h, --help             Show this help
 
 Examples:
   ./build.sh --target linux-x86
   ./build.sh -w /tmp/icu --target linux-arm
-  ./build.sh --target linux-x86 --target linux-arm
+  ./build.sh --target mac-x86 --macos-sdk /opt/SDKs/MacOSX14.2.sdk
+  ./build.sh --target mac-universal
   ./build.sh
 EOF
 }
@@ -22,15 +25,26 @@ EOF
 # -------------------- args --------------------
 WORK_DIR=/workdir
 TARGET=all
+MACOS_MIN_VER=11.0
+# Note: default SDK path depends on WORK_DIR, so we defer its default assignment until after arg parsing.
+MACOS_SDK_DEFAULT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -w|--workdir) WORK_DIR="$2"; shift 2 ;;
     -t|--target)  TARGET="$2";   shift 2 ;;
+    -s|--macos-sdk) MACOS_SDK_DEFAULT="$2"; shift 2 ;;
+    -m|--macos-min) MACOS_MIN_VER="$2"; shift 2 ;;
     -h|--help)    usage; exit 0 ;;
     *) echo "Unknown option: $1"; usage; exit 1 ;;
   esac
 done
+
+# Default SDK path now that WORK_DIR is known
+if [[ -z "${MACOS_SDK_DEFAULT}" ]]; then
+  MACOS_SDK_DEFAULT="$WORK_DIR/ignored/MacOSX13.3.sdk"
+fi
+MACOS_SDK="$MACOS_SDK_DEFAULT"
 
 # -------------------- constants/paths --------------------
 BUILD_DIR="$WORK_DIR/build"
@@ -44,11 +58,24 @@ SYSROOT="$LIB_DIR/libc"
 declare -A ZIG_TARGETS=(
   [linux-x86]="x86_64-linux-musl"
   [linux-arm]="aarch64-linux-musl"
+  [mac-x86]="x86_64-macos"
+  [mac-arm]="aarch64-macos"
+)
+
+# Configure --host triplets for autoconf (ICU)
+declare -A HOST_TRIPLES=(
+  [linux-x86]="x86_64-linux-musl"
+  [linux-arm]="aarch64-linux-musl"
+  [mac-x86]="x86_64-apple-darwin"
+  [mac-arm]="aarch64-apple-darwin"
 )
 
 declare -A INSTALL_NAMES=(
   [linux-x86]="linux-x86_64"
   [linux-arm]="linux-arm_64"
+  [mac-x86]="macos-x86_64"
+  [mac-arm]="macos-arm_64"
+  [mac-universal]="macos-universal"
 )
 
 # -------------------- helpers --------------------
@@ -93,9 +120,50 @@ build_host_once() {
   HOST_BUILD_DIR="$HOST_BUILD"
 }
 
-build_target() {
+mac_flags() {
+  local sdk="$1"
+  local minver="$2"
+
+  export SDKROOT="$sdk"
+  # Force off tzfile.h usage on macOS (header not in SDK)
+  export CPPFLAGS="-isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
+  export CFLAGS="-isysroot $sdk -mmacosx-version-min=$minver"
+  export CXXFLAGS="-std=c++20 -stdlib=libc++ -isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
+  export LDFLAGS="-mmacosx-version-min=$minver"
+
+  export AR="zig ar"
+  export RANLIB="zig ranlib"
+  export NM="llvm-nm"
+  export STRIP="llvm-strip"
+}
+
+preflight_macos_toolchain() {
+  local zt="$1"   # x86_64-macos or aarch64-macos
+  local sdk="$2"
+  local minv="$3"
+
+  for p in "$sdk/usr/lib/libSystem.tbd" "$sdk/usr/include/stdio.h"; do
+    if [[ ! -f "$p" ]]; then
+      echo "ERROR: macOS SDK at '$sdk' is missing: ${p#$sdk/}"
+      exit 1
+    fi
+  done
+
+  local tf
+  tf="$(mktemp -p "${BUILD_DIR}" conftest.XXXXXX.c)"
+  echo 'int main(void){return 0;}' > "$tf"
+  if ! zig cc -target "$zt" --sysroot "$sdk" -isysroot "$sdk" \
+        -mmacosx-version-min="$minv" "$tf" -o "${tf%.c}"; then
+    echo "ERROR: Zig failed to link a minimal $zt test. Likely an SDK/linker issue."
+    exit 1
+  fi
+  rm -f "$tf" "${tf%.c}"
+}
+
+build_one() {
   local CLI_ID="$1"
   local ZT="${ZIG_TARGETS[$CLI_ID]:-}"
+  local HOST_TRIP="${HOST_TRIPLES[$CLI_ID]:-}"
   local INSTALL_NAME="${INSTALL_NAMES[$CLI_ID]:-}"
 
   if [[ -z "$ZT" || -z "$INSTALL_NAME" ]]; then
@@ -119,23 +187,122 @@ build_target() {
   mkdir -p "$BUILD_DIR_TGT" "$INSTALL_DIR_TGT"
   pushd "$BUILD_DIR_TGT" >/dev/null
 
-  export CC="zig cc -target $ZT --sysroot $SYSROOT"
-  export CXX="zig c++ -target $ZT --sysroot $SYSROOT"
-  export CXXFLAGS="-std=c++20"
+  if [[ "$CLI_ID" == "mac-x86" || "$CLI_ID" == "mac-arm" ]]; then
+    if [[ ! -d "$MACOS_SDK" ]]; then
+      echo "ERROR: macOS SDK not found at: $MACOS_SDK"
+      echo "       Provide with --macos-sdk PATH (default: $WORK_DIR/ignored/MacOSX13.3.sdk)"
+      exit 1
+    fi
+    mac_flags "$MACOS_SDK" "$MACOS_MIN_VER"
+    preflight_macos_toolchain "$ZT" "$MACOS_SDK" "$MACOS_MIN_VER"
 
-  "$SOURCE_DIR"/source/configure     \
-    --host="$ZT"                     \
+    export CC="zig cc -target $ZT --sysroot $MACOS_SDK"
+    export CXX="zig c++ -target $ZT --sysroot $MACOS_SDK"
+  else
+    export CC="zig cc -target $ZT --sysroot $SYSROOT"
+    export CXX="zig c++ -target $ZT --sysroot $SYSROOT"
+    export CXXFLAGS="-std=c++20"
+  fi
+
+    # Create a shim tzfile.h so ICU doesn't rely on the SDK having it.
+  local SHIM_DIR="$BUILD_DIR_TGT/shims"
+  mkdir -p "$SHIM_DIR"
+  cat > "$SHIM_DIR/tzfile.h" <<'EOF'
+#ifndef TZFILE_H
+#define TZFILE_H
+/* Minimal shim for ICU when cross-compiling to macOS SDKs that lack tzfile.h.
+   ICU needs TZDIR (zoneinfo root) and TZDEFAULT (/etc/localtime symlink). */
+#ifndef TZDIR
+#  define TZDIR "/usr/share/zoneinfo"
+#endif
+#ifndef TZDEFAULT
+#  define TZDEFAULT "/etc/localtime"
+#endif
+#ifndef TZDEFRULES
+#  define TZDEFRULES "posixrules"
+#endif
+#endif /* TZFILE_H */
+EOF
+
+  # Prepend the shim include path so it wins over the SDK.
+  export CPPFLAGS="-I$SHIM_DIR $CPPFLAGS"
+  export CFLAGS="-I$SHIM_DIR $CFLAGS"
+  export CXXFLAGS="-I$SHIM_DIR $CXXFLAGS"
+
+  "$SOURCE_DIR"/source/configure         \
+    --host="${HOST_TRIP}"                \
     --with-cross-build="$HOST_BUILD_DIR" \
-    --prefix="$INSTALL_DIR_TGT"      \
-    --enable-static                  \
-    --disable-shared                 \
-    --with-data-packaging=static     \
-    --disable-samples                \
+    --prefix="$INSTALL_DIR_TGT"          \
+    --enable-static                      \
+    --disable-shared                     \
+    --with-data-packaging=static         \
+    --disable-samples                    \
     --disable-tests
 
   make -j"$(nproc)"
   make install
   popd >/dev/null
+}
+
+lipo_tool() {
+  if command -v lipo >/dev/null 2>&1; then
+    echo "lipo"
+    return 0
+  fi
+  if command -v llvm-lipo >/dev/null 2>&1; then
+    echo "llvm-lipo"
+    return 0
+  fi
+  return 1
+}
+
+build_universal() {
+  # Build per-arch first, then merge static libs with lipo if available.
+  build_one mac-x86
+  build_one mac-arm
+
+  local DIR_X86="$TARGET_DIR/${INSTALL_NAMES[mac-x86]}"
+  local DIR_ARM="$TARGET_DIR/${INSTALL_NAMES[mac-arm]}"
+  local DIR_UNI="$TARGET_DIR/${INSTALL_NAMES[mac-universal]}"
+
+  rm -rf "$DIR_UNI"
+  mkdir -p "$DIR_UNI/lib"
+  # Headers and data are arch-agnostic; prefer arm dir for headers, then copy if missing.
+  rsync -a "$DIR_ARM/include/" "$DIR_UNI/include/" 2>/dev/null || true
+  rsync -a "$DIR_X86/include/" "$DIR_UNI/include/" 2>/dev/null || true
+
+  # If no lipo available, just stage separate outputs and warn.
+  local LIPO_BIN
+  if ! LIPO_BIN="$(lipo_tool)"; then
+    echo "[mac-universal] WARNING: 'lipo' not found. Produced per-arch builds only."
+    echo "                 x86_64: $DIR_X86"
+    echo "                 arm64 : $DIR_ARM"
+    return 0
+  fi
+
+  echo "[mac-universal] merging static libraries with $LIPO_BIN…"
+  shopt -s nullglob
+  for libname in libicu*.a; do
+    local X86_LIB="$DIR_X86/lib/$libname"
+    local ARM_LIB="$DIR_ARM/lib/$libname"
+    if [[ -f "$X86_LIB" && -f "$ARM_LIB" ]]; then
+      "$LIPO_BIN" -create -output "$DIR_UNI/lib/$libname" "$X86_LIB" "$ARM_LIB"
+    fi
+  done
+
+  # Copy any other libs/tools if they exist
+  rsync -a "$DIR_ARM/bin/" "$DIR_UNI/bin/" 2>/dev/null || true
+  rsync -a "$DIR_X86/bin/" "$DIR_UNI/bin/" 2>/dev/null || true
+
+  echo "[mac-universal] done at: $DIR_UNI"
+}
+
+build_target() {
+  local CLI_ID="$1"
+  case "$CLI_ID" in
+    mac-universal) build_universal ;;
+    *) build_one "$CLI_ID" ;;
+  esac
 }
 
 # -------------------- drive --------------------
@@ -145,15 +312,17 @@ case "$TARGET" in
   all)
     build_target linux-x86
     build_target linux-arm
+    build_target mac-x86
+    build_target mac-arm
     ;;
-  linux-x86|linux-arm)
+  linux-x86|linux-arm|mac-x86|mac-arm|mac-universal)
     build_target "$TARGET"
     ;;
   *)
     echo "Unsupported --target: $TARGET"
-    echo "Use one of: linux-x86 | linux-arm | all"
+    echo "Use one of: linux-x86 | linux-arm | mac-x86 | mac-arm | mac-universal | all"
     exit 1
     ;;
 esac
 
-echo "Done. Artifacts installed under: $TARGET_DIR/{linux-x86_64,linux-arm_64}"
+echo "Done. Artifacts installed under: $TARGET_DIR/{linux-x86_64,linux-arm_64,macos-x86_64,macos-arm_64,macos-universal}"
