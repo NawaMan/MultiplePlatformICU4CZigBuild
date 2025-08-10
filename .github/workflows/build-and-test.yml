@@ -52,7 +52,7 @@ jobs:
       - name: Build the library
         run: |
             echo "./build.sh $(pwd)"
-            ./build.sh --working $(pwd) --target all
+            ./build.sh --workdir $(pwd) --target all
 
       - name: Inspace target
         run: |
