@@ -174,6 +174,14 @@ build_one() {
   local BUILD_DIR_TGT="$BUILD_DIR/icu4c-build-$INSTALL_NAME"
   local INSTALL_DIR_TGT="$TARGET_DIR/$INSTALL_NAME"
 
+  # ---- reset flags per target to avoid leakage + nounset issues ----
+  CPPFLAGS=""
+  CFLAGS=""
+  CXXFLAGS=""
+  LDFLAGS=""
+  unset SDKROOT || true
+  export CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
+
   if [[ "$CLI_ID" == "linux-x86" ]]; then
     build_host_once
     return 0
@@ -196,18 +204,10 @@ build_one() {
     mac_flags "$MACOS_SDK" "$MACOS_MIN_VER"
     preflight_macos_toolchain "$ZT" "$MACOS_SDK" "$MACOS_MIN_VER"
 
-    export CC="zig cc -target $ZT --sysroot $MACOS_SDK"
-    export CXX="zig c++ -target $ZT --sysroot $MACOS_SDK"
-  else
-    export CC="zig cc -target $ZT --sysroot $SYSROOT"
-    export CXX="zig c++ -target $ZT --sysroot $SYSROOT"
-    export CXXFLAGS="-std=c++20"
-  fi
-
     # Create a shim tzfile.h so ICU doesn't rely on the SDK having it.
-  local SHIM_DIR="$BUILD_DIR_TGT/shims"
-  mkdir -p "$SHIM_DIR"
-  cat > "$SHIM_DIR/tzfile.h" <<'EOF'
+    local SHIM_DIR="$BUILD_DIR_TGT/shims"
+    mkdir -p "$SHIM_DIR"
+    cat > "$SHIM_DIR/tzfile.h" <<'EOF'
 #ifndef TZFILE_H
 #define TZFILE_H
 /* Minimal shim for ICU when cross-compiling to macOS SDKs that lack tzfile.h.
@@ -223,11 +223,18 @@ build_one() {
 #endif
 #endif /* TZFILE_H */
 EOF
+    # Prepend the shim include path safely.
+    export CPPFLAGS="-I$SHIM_DIR ${CPPFLAGS:-}"
+    export CFLAGS="-I$SHIM_DIR ${CFLAGS:-}"
+    export CXXFLAGS="-I$SHIM_DIR ${CXXFLAGS:-}"
 
-  # Prepend the shim include path so it wins over the SDK.
-  export CPPFLAGS="-I$SHIM_DIR $CPPFLAGS"
-  export CFLAGS="-I$SHIM_DIR $CFLAGS"
-  export CXXFLAGS="-I$SHIM_DIR $CXXFLAGS"
+    export CC="zig cc -target $ZT --sysroot $MACOS_SDK"
+    export CXX="zig c++ -target $ZT --sysroot $MACOS_SDK"
+  else
+    export CC="zig cc -target $ZT --sysroot $SYSROOT"
+    export CXX="zig c++ -target $ZT --sysroot $SYSROOT"
+    export CXXFLAGS="${CXXFLAGS:-} -std=c++20"
+  fi
 
   "$SOURCE_DIR"/source/configure         \
     --host="${HOST_TRIP}"                \
