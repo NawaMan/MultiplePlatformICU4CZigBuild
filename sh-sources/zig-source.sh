@@ -15,6 +15,7 @@ download-zig() {
     if [ ! -f "$ZIG_FILE" ]; then
         ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-${PLATFORM}-${OS}-${ZIG_VERSION}.tar.xz"
         print "📥 Downloading ZIG..."
+        echo curl -L -o $ZIG_FILE "$ZIG_URL"
         curl -L -o $ZIG_FILE "$ZIG_URL"
         print ""
     fi
