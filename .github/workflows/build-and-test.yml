@@ -152,7 +152,7 @@ jobs:
   run-test-linux-arm64:
     name: Run Test Linux ARM64
     needs: build-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
