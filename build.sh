@@ -56,26 +56,26 @@ SYSROOT="$LIB_DIR/libc"
 
 # Map CLI target IDs -> zig targets + install dir names
 declare -A ZIG_TARGETS=(
-  [linux-x86]="x86_64-linux-musl"
-  [linux-arm]="aarch64-linux-musl"
-  [mac-x86]="x86_64-macos"
-  [mac-arm]="aarch64-macos"
+  ["linux-x86"]="x86_64-linux-musl"
+  ["linux-arm"]="aarch64-linux-musl"
+  ["mac-x86"]="x86_64-macos"
+  ["mac-arm"]="aarch64-macos"
 )
 
 # Configure --host triplets for autoconf (ICU)
 declare -A HOST_TRIPLES=(
-  [linux-x86]="x86_64-linux-musl"
-  [linux-arm]="aarch64-linux-musl"
-  [mac-x86]="x86_64-apple-darwin"
-  [mac-arm]="aarch64-apple-darwin"
+  ["linux-x86"]="x86_64-linux-musl"
+  ["linux-arm"]="aarch64-linux-musl"
+  ["mac-x86"]="x86_64-apple-darwin"
+  ["mac-arm"]="aarch64-apple-darwin"
 )
 
 declare -A INSTALL_NAMES=(
-  [linux-x86]="linux-x86_64"
-  [linux-arm]="linux-arm_64"
-  [mac-x86]="macos-x86_64"
-  [mac-arm]="macos-arm_64"
-  [mac-universal]="macos-universal"
+  ["linux-x86"]="linux-x86_64"
+  ["linux-arm"]="linux-arm_64"
+  ["mac-x86"]="macos-x86_64"
+  ["mac-arm"]="macos-arm_64"
+  ["mac-universal"]="macos-universal"
 )
 
 # -------------------- helpers --------------------
@@ -87,7 +87,7 @@ ensure_source() {
 }
 
 build_host_once() {
-  local HOST_INSTALL="$TARGET_DIR/${INSTALL_NAMES[linux-x86]}"
+  local HOST_INSTALL="$TARGET_DIR/${INSTALL_NAMES["linux-x86"]}"
   local HOST_BUILD="$BUILD_DIR/icu4c-build-host"
 
   if [[ -f "$HOST_INSTALL/lib/libicuuc.a" ]]; then
@@ -164,7 +164,7 @@ build_one() {
   local CLI_ID="$1"
   local ZT="${ZIG_TARGETS[$CLI_ID]:-}"
   local HOST_TRIP="${HOST_TRIPLES[$CLI_ID]:-}"
-  local INSTALL_NAME="${INSTALL_NAMES[$CLI_ID]:-}"
+  local INSTALL_NAME="${INSTALL_NAMES["$CLI_ID"]:-}"
 
   if [[ -z "$ZT" || -z "$INSTALL_NAME" ]]; then
     echo "Unknown target id: $CLI_ID"
@@ -268,9 +268,9 @@ build_universal() {
   build_one mac-x86
   build_one mac-arm
 
-  local DIR_X86="$TARGET_DIR/${INSTALL_NAMES[mac-x86]}"
-  local DIR_ARM="$TARGET_DIR/${INSTALL_NAMES[mac-arm]}"
-  local DIR_UNI="$TARGET_DIR/${INSTALL_NAMES[mac-universal]}"
+  local DIR_X86="$TARGET_DIR/${INSTALL_NAMES["mac-x86"]}"
+  local DIR_ARM="$TARGET_DIR/${INSTALL_NAMES["mac-arm"]}"
+  local DIR_UNI="$TARGET_DIR/${INSTALL_NAMES["mac-universal"]}"
 
   rm -rf "$DIR_UNI"
   mkdir -p "$DIR_UNI/lib"
