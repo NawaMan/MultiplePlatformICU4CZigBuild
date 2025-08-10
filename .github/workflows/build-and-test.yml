@@ -152,7 +152,7 @@ jobs:
   run-test-linux-arm64:
     name: Run Test Linux ARM64
     needs: build-test
-    runs-on: ubuntu-24.04-arm64
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -166,13 +166,13 @@ jobs:
           name: tests-dist
           path: dist
 
-      - name: Show tree
-        run: tree
-
-      - name: Show files
-        run: ls -la ./dist
-
-      - name: Build test
-        run: |
-          chmod +x ./dist/simple-test-aarch64-linux
-          ./dist/simple-test-aarch64-linux
+      - name: Run on ARM-64
+        uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: aarch64
+          distro: ubuntu22.04
+          run: |
+            tree
+            ls -la ./dist
+            chmod +x ./dist/simple-test-aarch64-linux
+            ./dist/simple-test-aarch64-linux
