@@ -137,14 +137,8 @@ jobs:
           name: tests-dist
           path: dist
 
-      - name: Show tree
-        run: tree
-
-      - name: Show files
+      - name: Run on Linux X86-64
         run: ls -la ./dist
-
-      - name: Build test
-        run: |
           chmod +x ./dist/simple-test-x86_64-linux
           ./dist/simple-test-x86_64-linux
 
@@ -166,13 +160,12 @@ jobs:
           name: tests-dist
           path: dist
 
-      - name: Run on ARM-64
+      - name: Run on Linux ARM-64
         uses: uraimo/run-on-arch-action@v2
         with:
           arch: aarch64
           distro: ubuntu22.04
           run: |
-            tree
             ls -la ./dist
             chmod +x ./dist/simple-test-aarch64-linux
             ./dist/simple-test-aarch64-linux
