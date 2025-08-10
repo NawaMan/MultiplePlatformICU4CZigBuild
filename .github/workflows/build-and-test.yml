@@ -145,6 +145,7 @@ jobs:
 
       - name: Build test
         run: |
+          chmod +x ./dist/simple-test-x86_64-linux
           ./dist/simple-test-x86_64-linux
 
   # Run Test - Linux ARM64
@@ -173,4 +174,5 @@ jobs:
 
       - name: Build test
         run: |
+          chmod +x ./dist/simple-test-aarch64-linux
           ./dist/simple-test-aarch64-linux
