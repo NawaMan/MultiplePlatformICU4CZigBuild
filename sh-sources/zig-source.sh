@@ -31,7 +31,7 @@ extract-zig() {
     pushd $ZIG_DIR 1> /dev/null
 
     sudo tar -xf $ZIG_FILE --strip-components=1
-    sudo ln -s /opt/zig/zig /usr/bin/zig
+    sudo ln -s /opt/zig/zig /usr/local/bin/zig
 
     popd 1> /dev/null
 
