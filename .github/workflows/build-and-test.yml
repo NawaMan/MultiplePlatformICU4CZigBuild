@@ -138,7 +138,8 @@ jobs:
           path: dist
 
       - name: Run on Linux X86-64
-        run: ls -la ./dist
+        run: |
+          ls -la ./dist
           chmod +x ./dist/simple-test-x86_64-linux
           ./dist/simple-test-x86_64-linux
 
