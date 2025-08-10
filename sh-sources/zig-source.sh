@@ -4,7 +4,8 @@
 download-zig() {
     ZIG_VERSION=$1
     ZIG_FILE=$2
-    PLATFORM=${3:-x86_64}
+    OS=${3:-linux}
+    PLATFORM=${4:-x86_64}
 
     if [ "$ZIG_VERSION" == "" ]; then
         exit_with_error "ZIG_VERSION is not set!"
@@ -12,7 +13,7 @@ download-zig() {
 
     print "Ensure ZIG source"
     if [ ! -f "$ZIG_FILE" ]; then
-        ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-${PLATFORM}-linux-${ZIG_VERSION}.tar.xz"
+        ZIG_URL="https://ziglang.org/download/${ZIG_VERSION}/zig-${PLATFORM}-${OS}-${ZIG_VERSION}.tar.xz"
         print "📥 Downloading ZIG..."
         curl -L -o $ZIG_FILE "$ZIG_URL"
         print ""
