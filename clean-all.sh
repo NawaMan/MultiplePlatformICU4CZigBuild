@@ -6,4 +6,5 @@ function remove() {
     rm -Rf "$FILE"
 }
 
+remove build
 remove dist

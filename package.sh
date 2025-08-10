@@ -39,7 +39,10 @@ BUILD_DIR=$WORK_DIR/build
 
 
 TARGET_DIR=$WORK_DIR/build/icu4c-target
-TARGET_LIB=$WORK_DIR/dist/icu4c-library
+LIBRARY_DIR=icu4c-library
+DIST_DIR=$WORK_DIR/dist
+TARGET_LIB=$DIST_DIR/$LIBRARY_DIR
+TARGET_TGZ=$DIST_DIR/$LIBRARY_DIR.tar.gz
 mkdir -p "$TARGET_LIB/common/include"
 mkdir -p "$TARGET_LIB/common/share"
 
@@ -82,11 +85,14 @@ for arch in "${ARCHES[@]}"; do
   copy_arch "$TARGET_DIR/$arch" "$arch"
 done
 
+tar -czf "$TARGET_TGZ" -C "$DIST_DIR" "$LIBRARY_DIR"
+
 echo "✅ ICU4C library prepared at: $TARGET_LIB"
 echo "Structure:"
 echo "  common/include/**"
 echo "  common/share/**"
 echo "  linux-x86_64/{bin,lib,sbin}/**"
 echo "  linux-arm_64/{bin,lib,sbin}/**"
+echo "✅ ICU4C library archive file at: $TARGET_TGZ"
 
 echo "ICU4C library prepared in: $TARGET_LIB"
