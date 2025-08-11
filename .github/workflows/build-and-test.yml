@@ -167,8 +167,8 @@ jobs:
           distro: ubuntu22.04
           run: |
             ls -la ./dist
-            chmod +x ./dist/simple-test-arm-64-linux
-            ./dist/simple-test-arm-64-linux
+            chmod +x ./dist/simple-test-arm_64-linux
+            ./dist/simple-test-arm_64-linux
   
   # Run Test - macOS x86_64 (Intel)
   run-test-macos-x86:
