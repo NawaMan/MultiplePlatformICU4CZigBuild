@@ -167,5 +167,55 @@ jobs:
           distro: ubuntu22.04
           run: |
             ls -la ./dist
-            chmod +x ./dist/simple-test-aarch64-linux
-            ./dist/simple-test-aarch64-linux
+            chmod +x ./dist/simple-test-arm-64-linux
+            ./dist/simple-test-arm-64-linux
+  
+  # Run Test - macOS x86_64 (Intel)
+  run-test-macos-x86:
+    name: Run Test macOS x86_64
+    needs: build-test
+    runs-on: macos-13   # Intel runner
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: dist
+
+      - name: Sanity check files
+        run: |
+          ls -la dist
+          file dist/simple-test-x86_64-macos || true
+
+      - name: Run on macOS x86_64
+        run: |
+          chmod +x dist/simple-test-x86_64-macos
+          ./dist/simple-test-x86_64-macos
+
+  # Run Test - macOS arm64 (Apple Silicon)
+  run-test-macos-arm64:
+    name: Run Test macOS arm_64
+    needs: build-test
+    runs-on: macos-15   # Apple Silicon runner (macos-latest is also Apple Silicon)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: dist
+
+      - name: Sanity check files
+        run: |
+          ls -la dist
+          file dist/simple-test-arm_64-macos || true
+
+      - name: Run on macOS arm_64
+        run: |
+          chmod +x dist/simple-test-arm_64-macos
+          ./dist/simple-test-arm_64-macos
