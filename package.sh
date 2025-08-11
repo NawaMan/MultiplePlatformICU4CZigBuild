@@ -38,53 +38,68 @@ BUILD_DIR=$WORK_DIR/build
 #     sbin/**
 
 
-TARGET_DIR=$WORK_DIR/build/icu4c-target
-LIBRARY_DIR=icu4c-library
-DIST_DIR=$WORK_DIR/dist
-TARGET_LIB=$DIST_DIR/$LIBRARY_DIR
-TARGET_TGZ=$DIST_DIR/$LIBRARY_DIR.tar.gz
+TARGET_DIR="$BUILD_DIR/icu4c-target"
+
+LIBRARY_DIR="icu4c-library"
+DIST_DIR="$WORK_DIR/dist"
+TARGET_LIB="$DIST_DIR/$LIBRARY_DIR"
+TARGET_TGZ="$DIST_DIR/$LIBRARY_DIR.tar.gz"
+
+mkdir -p "$DIST_DIR"
+
+# Start clean
+rm -rf "$TARGET_LIB" "$TARGET_TGZ"
 mkdir -p "$TARGET_LIB/common/include"
 mkdir -p "$TARGET_LIB/common/share"
 
-ARCHES=("linux-x86_64" "linux-arm_64")
+# Detect which arches are present
+CANDIDATES=( linux-x86_64 linux-arm_64 macos-x86_64 macos-arm_64 macos-universal )
+ARCHES=()
+for a in "${CANDIDATES[@]}"; do
+  [[ -d "$TARGET_DIR/$a" ]] && ARCHES+=("$a")
+done
 
-# Create destination root
-mkdir -p "$TARGET_LIB"
+if [[ ${#ARCHES[@]} -eq 0 ]]; then
+  echo "ERROR: No built ICU targets found under $TARGET_DIR"
+  exit 1
+fi
 
-# ---- Common (arch-independent) ----
-# Use one arch (x86_64) as the donor for headers & share; they’re identical across arches.
+# Choose a donor for common headers/share (all arches are equivalent for these)
 DONOR="${ARCHES[0]}"
 
-echo "Preparing common/include ..."
-mkdir -p "$TARGET_LIB/common/include"
+echo "Preparing common/include from $DONOR ..."
 cp -a "$TARGET_DIR/$DONOR/include/unicode" "$TARGET_LIB/common/include/"
 
-echo "Preparing common/share ..."
-mkdir -p "$TARGET_LIB/common/share"
-cp -a "$TARGET_DIR/$DONOR/share/icu" "$TARGET_LIB/common/share/"
-cp -a "$TARGET_DIR/$DONOR/share/man" "$TARGET_LIB/common/share/"
+# Copy if present (some builds may omit man pages)
+echo "Preparing common/share from $DONOR ..."
+if [[ -d "$TARGET_DIR/$DONOR/share/icu" ]]; then
+  cp -a "$TARGET_DIR/$DONOR/share/icu" "$TARGET_LIB/common/share/"
+fi
+if [[ -d "$TARGET_DIR/$DONOR/share/man" ]]; then
+  cp -a "$TARGET_DIR/$DONOR/share/man" "$TARGET_LIB/common/share/"
+fi
 
 # ---- Per-arch (CPU-specific) ----
 copy_arch() {
   local src="$1"
   local name="$2"
-  local dst="$TARGET_LIB/$2"
+  local dst="$TARGET_LIB/$name"
 
   echo "Copying per-arch files for $name ..."
   mkdir -p "$dst"
 
   # bin, sbin, lib are arch-specific
-  cp -a "$src/bin"  "$dst/"
-  cp -a "$src/sbin" "$dst/"
-  cp -a "$src/lib"  "$dst/"
+  [[ -d "$src/bin"  ]] && cp -a "$src/bin"  "$dst/"
+  [[ -d "$src/sbin" ]] && cp -a "$src/sbin" "$dst/"
+  [[ -d "$src/lib"  ]] && cp -a "$src/lib"  "$dst/"
 }
 
+# Per-arch copies
 for arch in "${ARCHES[@]}"; do
-  # Quick sanity checks
-  [[ -d "$TARGET_DIR/$arch" ]] || { echo "Missing: $TARGET_DIR/$arch"; exit 1; }
   copy_arch "$TARGET_DIR/$arch" "$arch"
 done
 
+# Tar it up
 tar -czf "$TARGET_TGZ" -C "$DIST_DIR" "$LIBRARY_DIR"
 
 echo "✅ ICU4C library prepared at: $TARGET_LIB"

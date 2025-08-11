@@ -8,17 +8,17 @@ Usage:
 
 Options:
   -w, --workdir PATH     Working root (default: /workdir)
-  -t, --target  ID       Target to build: linux-x86 | linux-arm | mac-x86 | mac-arm | mac-universal | all (default: all)
-  -s, --macos-sdk PATH   Path to macOS SDK (default: $WORKDIR/ignored/MacOSX13.3.sdk)
+  -t, --target  ID       Target: linux-x86 | linux-arm | mac-x86 | mac-arm | mac-universal | all (default: all)
+  -s, --macos-sdk PATH   Path to macOS SDK (optional). If omitted/invalid, uses Zig's built-in Darwin headers (no SDK).
   -m, --macos-min N      Minimum macOS version (default: 11.0)
   -h, --help             Show this help
 
 Examples:
   ./build.sh --target linux-x86
   ./build.sh -w /tmp/icu --target linux-arm
-  ./build.sh --target mac-x86 --macos-sdk /opt/SDKs/MacOSX14.2.sdk
+  ./build.sh --target mac-x86
+  ./build.sh --target mac-arm --macos-sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk
   ./build.sh --target mac-universal
-  ./build.sh
 EOF
 }
 
@@ -26,25 +26,18 @@ EOF
 WORK_DIR=/workdir
 TARGET=all
 MACOS_MIN_VER=11.0
-# Note: default SDK path depends on WORK_DIR, so we defer its default assignment until after arg parsing.
-MACOS_SDK_DEFAULT=""
+MACOS_SDK=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -w|--workdir) WORK_DIR="$2"; shift 2 ;;
     -t|--target)  TARGET="$2";   shift 2 ;;
-    -s|--macos-sdk) MACOS_SDK_DEFAULT="$2"; shift 2 ;;
+    -s|--macos-sdk) MACOS_SDK="$2"; shift 2 ;;
     -m|--macos-min) MACOS_MIN_VER="$2"; shift 2 ;;
     -h|--help)    usage; exit 0 ;;
     *) echo "Unknown option: $1"; usage; exit 1 ;;
   esac
 done
-
-# Default SDK path now that WORK_DIR is known
-if [[ -z "${MACOS_SDK_DEFAULT}" ]]; then
-  MACOS_SDK_DEFAULT="$WORK_DIR/ignored/MacOSX13.3.sdk"
-fi
-MACOS_SDK="$MACOS_SDK_DEFAULT"
 
 # -------------------- constants/paths --------------------
 BUILD_DIR="$WORK_DIR/build"
@@ -120,24 +113,36 @@ build_host_once() {
   HOST_BUILD_DIR="$HOST_BUILD"
 }
 
-mac_flags() {
-  local sdk="$1"
-  local minver="$2"
-
-  export SDKROOT="$sdk"
-  # Force off tzfile.h usage on macOS (header not in SDK)
-  export CPPFLAGS="-isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
-  export CFLAGS="-isysroot $sdk -mmacosx-version-min=$minver"
-  export CXXFLAGS="-std=c++20 -stdlib=libc++ -isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
-  export LDFLAGS="-mmacosx-version-min=$minver"
-
+# ---- mac flag sets ----
+mac_flags_builtin() {
+  local minver="$1"
+  # No SDK. Use Zig's bundled Darwin headers/libc++.
+  unset SDKROOT || true
+  export CPPFLAGS="${CPPFLAGS:-} -DU_HAVE_TZFILE=0"
+  export CFLAGS="${CFLAGS:-}"
+  export CXXFLAGS="${CXXFLAGS:-} -std=c++20 -stdlib=libc++ -DU_HAVE_TZFILE=0"
+  export LDFLAGS="${LDFLAGS:-} -mmacosx-version-min=$minver"
   export AR="zig ar"
   export RANLIB="zig ranlib"
   export NM="llvm-nm"
   export STRIP="llvm-strip"
 }
 
-preflight_macos_toolchain() {
+mac_flags_sdk() {
+  local sdk="$1"
+  local minver="$2"
+  export SDKROOT="$sdk"
+  export CPPFLAGS="${CPPFLAGS:-} -isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
+  export CFLAGS="${CFLAGS:-}   -isysroot $sdk -mmacosx-version-min=$minver"
+  export CXXFLAGS="${CXXFLAGS:-} -std=c++20 -stdlib=libc++ -isysroot $sdk -mmacosx-version-min=$minver -DU_HAVE_TZFILE=0"
+  export LDFLAGS="${LDFLAGS:-} -mmacosx-version-min=$minver"
+  export AR="zig ar"
+  export RANLIB="zig ranlib"
+  export NM="llvm-nm"
+  export STRIP="llvm-strip"
+}
+
+preflight_macos_sdk() {
   local zt="$1"   # x86_64-macos or aarch64-macos
   local sdk="$2"
   local minv="$3"
@@ -154,7 +159,7 @@ preflight_macos_toolchain() {
   echo 'int main(void){return 0;}' > "$tf"
   if ! zig cc -target "$zt" --sysroot "$sdk" -isysroot "$sdk" \
         -mmacosx-version-min="$minv" "$tf" -o "${tf%.c}"; then
-    echo "ERROR: Zig failed to link a minimal $zt test. Likely an SDK/linker issue."
+    echo "ERROR: Zig failed to link a minimal $zt test with SDK '$sdk'."
     exit 1
   fi
   rm -f "$tf" "${tf%.c}"
@@ -195,23 +200,16 @@ build_one() {
   mkdir -p "$BUILD_DIR_TGT" "$INSTALL_DIR_TGT"
   pushd "$BUILD_DIR_TGT" >/dev/null
 
+  # ---- mac targets ----
   if [[ "$CLI_ID" == "mac-x86" || "$CLI_ID" == "mac-arm" ]]; then
-    if [[ ! -d "$MACOS_SDK" ]]; then
-      echo "ERROR: macOS SDK not found at: $MACOS_SDK"
-      echo "       Provide with --macos-sdk PATH (default: $WORK_DIR/ignored/MacOSX13.3.sdk)"
-      exit 1
-    fi
-    mac_flags "$MACOS_SDK" "$MACOS_MIN_VER"
-    preflight_macos_toolchain "$ZT" "$MACOS_SDK" "$MACOS_MIN_VER"
-
-    # Create a shim tzfile.h so ICU doesn't rely on the SDK having it.
+    # tzfile shim (used in both modes)
     local SHIM_DIR="$BUILD_DIR_TGT/shims"
     mkdir -p "$SHIM_DIR"
     cat > "$SHIM_DIR/tzfile.h" <<'EOF'
 #ifndef TZFILE_H
 #define TZFILE_H
-/* Minimal shim for ICU when cross-compiling to macOS SDKs that lack tzfile.h.
-   ICU needs TZDIR (zoneinfo root) and TZDEFAULT (/etc/localtime symlink). */
+/* Minimal shim for ICU when cross-compiling to macOS.
+   ICU needs TZDIR and TZDEFAULT; modern SDKs may lack tzfile.h. */
 #ifndef TZDIR
 #  define TZDIR "/usr/share/zoneinfo"
 #endif
@@ -223,14 +221,24 @@ build_one() {
 #endif
 #endif /* TZFILE_H */
 EOF
-    # Prepend the shim include path safely.
     export CPPFLAGS="-I$SHIM_DIR ${CPPFLAGS:-}"
     export CFLAGS="-I$SHIM_DIR ${CFLAGS:-}"
     export CXXFLAGS="-I$SHIM_DIR ${CXXFLAGS:-}"
 
-    export CC="zig cc -target $ZT --sysroot $MACOS_SDK"
-    export CXX="zig c++ -target $ZT --sysroot $MACOS_SDK"
+    if [[ -n "${MACOS_SDK:-}" && -d "$MACOS_SDK" ]]; then
+      echo "[$CLI_ID] using macOS SDK at: $MACOS_SDK"
+      mac_flags_sdk "$MACOS_SDK" "$MACOS_MIN_VER"
+      preflight_macos_sdk "$ZT" "$MACOS_SDK" "$MACOS_MIN_VER"
+      export CC="zig cc -target $ZT --sysroot $MACOS_SDK"
+      export CXX="zig c++ -target $ZT --sysroot $MACOS_SDK"
+    else
+      echo "[$CLI_ID] no SDK provided or not a directory; using Zig's built-in Darwin headers."
+      mac_flags_builtin "$MACOS_MIN_VER"
+      export CC="zig cc -target $ZT"
+      export CXX="zig c++ -target $ZT"
+    fi
   else
+    # ---- linux targets ----
     export CC="zig cc -target $ZT --sysroot $SYSROOT"
     export CXX="zig c++ -target $ZT --sysroot $SYSROOT"
     export CXXFLAGS="${CXXFLAGS:-} -std=c++20"
