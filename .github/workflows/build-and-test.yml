@@ -52,8 +52,7 @@ jobs:
       - name: Build the library
         run: |
             echo "./build.sh $(pwd)"
-            ./build.sh --workdir $(pwd) --target linux-x86 --target linux-arm
-
+            ./build.sh --workdir $(pwd)
       - name: Inspace target
         run: |
             echo "tree -L 3 build/icu4c-target"
