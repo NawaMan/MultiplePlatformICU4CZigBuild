@@ -82,19 +82,31 @@ void runLocaleExample() {
     println("Japanese Locale: {} ({})", jp.getName(), toString(jp.getDisplayName(jpName)));
     
     // Number formatting
-    UErrorCode status = U_ZERO_ERROR;
-    std::unique_ptr<icu::NumberFormat> nf_us(icu::NumberFormat::createCurrencyInstance(us, status));
-    std::unique_ptr<icu::NumberFormat> nf_fr(icu::NumberFormat::createCurrencyInstance(fr, status));
-    std::unique_ptr<icu::NumberFormat> nf_jp(icu::NumberFormat::createCurrencyInstance(jp, status));
-    
-    double amount = 1234567.89;
+
+    // Use ISO style for US to avoid '$1' getting eaten anywhere.
+    // NOTE: This is still problem. Let's solve later.
+
+    UErrorCode st_us = U_ZERO_ERROR;
+    std::unique_ptr<icu::NumberFormat> nf_us_iso(
+        icu::NumberFormat::createInstance(us, UNUM_CURRENCY_ISO, st_us));
+
+    UErrorCode st_fr = U_ZERO_ERROR;
+    std::unique_ptr<icu::NumberFormat> nf_fr(
+        icu::NumberFormat::createCurrencyInstance(fr, st_fr));
+
+    UErrorCode st_jp = U_ZERO_ERROR;
+    std::unique_ptr<icu::NumberFormat> nf_jp(
+        icu::NumberFormat::createCurrencyInstance(jp, st_jp));
+
     icu::UnicodeString result_us, result_fr, result_jp;
     
-    if (U_SUCCESS(status)) {
-        nf_us->format(amount, result_us);
+    double amount = 1234567.89;
+
+    if (U_SUCCESS(st_us) && U_SUCCESS(st_fr) && U_SUCCESS(st_jp)) {
+        nf_us_iso->format(amount, result_us);  // -> "USD 1,234,567.89"
         nf_fr->format(amount, result_fr);
         nf_jp->format(amount, result_jp);
-        
+
         println("Currency formatting:");
         println("  US: {}",     toString(result_us));
         println("  France: {}", toString(result_fr));
