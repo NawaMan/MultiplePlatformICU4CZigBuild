@@ -53,7 +53,7 @@ mkdir -p "$TARGET_LIB/common/include"
 mkdir -p "$TARGET_LIB/common/share"
 
 # Detect which arches are present
-CANDIDATES=( linux-x86_64 linux-arm_64 macos-x86_64 macos-arm_64 macos-universal )
+CANDIDATES=( linux-x86_64 linux-arm_64 macos-x86_64 macos-arm_64 macos-universal windows-x86_64 windows-arm_64 )
 ARCHES=()
 for a in "${CANDIDATES[@]}"; do
   [[ -d "$TARGET_DIR/$a" ]] && ARCHES+=("$a")

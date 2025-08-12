@@ -219,3 +219,73 @@ jobs:
         run: |
           chmod +x dist/simple-test-arm_64-macos
           ./dist/simple-test-arm_64-macos
+  
+  # Run Test - Windows x86_64
+  run-test-windows-x86:
+    name: Run Test Windows x86_64
+    needs: build-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: dist
+
+      - name: Sanity check files
+        shell: pwsh
+        run: |
+          dir dist
+          Get-Item dist\simple-test-x86_64-windows.exe | Format-List
+
+      - name: Run on Windows x86_64
+        shell: pwsh
+        run: |
+          & .\dist\simple-test-x86_64-windows.exe
+
+  # "Run" Test - Windows arm64 (verify PE machine = ARM64)
+  run-test-windows-arm64:
+    name: Verify Test Windows arm_64 (PE header)
+    needs: build-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-dist
+          path: dist
+
+      - name: Verify ARM64 PE header
+        shell: pwsh
+        run: |
+          $path = "dist\simple-test-arm_64-windows.exe"
+          if (!(Test-Path $path)) { Write-Error "Missing $path"; exit 1 }
+
+          # Parse PE header to read Machine field
+          $fs = [System.IO.File]::OpenRead($path)
+          $br = New-Object System.IO.BinaryReader($fs)
+          $fs.Seek(0x3C, 'Begin') | Out-Null
+          $peoff = $br.ReadInt32()
+          $fs.Seek($peoff + 4, 'Begin') | Out-Null   # skip "PE\0\0"
+          $machine = $br.ReadUInt16()
+          $fs.Close()
+
+          $hex = '{0:X4}' -f $machine
+          Write-Host "PE Machine: 0x$hex (expect 0xAA64 for ARM64)"
+          if ($machine -ne 0xAA64) {
+            Write-Error "Not ARM64 (0xAA64). Got 0x$hex"
+            exit 1
+          }
+
+          # Optional: check PDB presence (kept or stripped)
+          if (Test-Path "${path}.pdb") {
+            Write-Host "Found symbols: ${path}.pdb"
+          } else {
+            Write-Host "No PDB found (that's fine)."
+          }

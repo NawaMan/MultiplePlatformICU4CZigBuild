@@ -13,6 +13,8 @@ build-test() {
   local OSNAME="$OS"
   if [[ "$OS" == "mac" || "$OS" == "darwin" || "$OS" == "macos" ]]; then
     OSNAME="macos"
+  elif [[ "$OS" == "win" || "$OS" == "windows" || "$OS" == "mingw" ]]; then
+    OSNAME="windows"
   fi
 
   # Map input arch to (a) dir/output arch name and (b) Zig target arch
@@ -23,8 +25,8 @@ build-test() {
     ARCH_TRIPLE="x86_64"
   else
     DIR_ARCH_BIT="arm_64"
-    OUT_ARCH="arm_64"     # <- output name uses arm_64
-    ARCH_TRIPLE="aarch64" # <- Zig target arch stays aarch64
+    OUT_ARCH="arm_64"     # output name uses arm_64
+    ARCH_TRIPLE="aarch64" # Zig target arch stays aarch64
   fi
 
   local INC_DIR="icu4c-library/common/include"
@@ -36,37 +38,62 @@ build-test() {
     ZIG_TARGET="${ARCH_TRIPLE}-linux-musl"
     EXTRA_CXX=""
     EXTRA_LINK="-pthread -ldl"
-  else
+  elif [[ "$OSNAME" == "macos" ]]; then
     ZIG_TARGET="${ARCH_TRIPLE}-macos"
     EXTRA_CXX="-stdlib=libc++ -mmacosx-version-min=11.0"
     EXTRA_LINK="-mmacosx-version-min=11.0"
+  else
+    # windows
+    ZIG_TARGET="${ARCH_TRIPLE}-windows-gnu"
+    EXTRA_CXX=""
+    EXTRA_LINK=""
   fi
 
   # ---- Output name (no '-musl', with arm_64) ----
   local OUT="$DIST/simple-test-${OUT_ARCH}-${OSNAME}"
+  [[ "$OSNAME" == "windows" ]] && OUT="${OUT}.exe"
 
   echo
   echo "Building for ${ZIG_TARGET} …"
 
-  zig c++ \
-    -target "$ZIG_TARGET" \
-    -std=c++20 \
-    ${EXTRA_CXX:-} \
-    src/*.cpp \
-    -O2 \
-    -I. \
-    -I"$INC_DIR" \
-    -L"$LIB_DIR" \
-    -licui18n -licuuc -licudata -licuio \
-    ${EXTRA_LINK:-} \
-    -o "$OUT"
+  if [[ "$OSNAME" == "windows" ]]; then
+    # Link Windows static archives explicitly (names differ from *nix)
+    zig c++                  \
+      -target "$ZIG_TARGET"  \
+      -std=c++20             \
+      ${EXTRA_CXX:-}         \
+      src/*.cpp              \
+      -O2                    \
+      -I.                    \
+      -I"$INC_DIR"           \
+      "$LIB_DIR/libsicuin.a" \
+      "$LIB_DIR/libsicuuc.a" \
+      "$LIB_DIR/sicudt.a"    \
+      "$LIB_DIR/libsicuio.a" \
+      ${EXTRA_LINK:-}        \
+      -o "$OUT"
+  else
+    # Linux/macOS: keep your existing -l usage
+    zig c++                               \
+      -target "$ZIG_TARGET"               \
+      -std=c++20                          \
+      ${EXTRA_CXX:-}                      \
+      src/*.cpp                           \
+      -O2                                 \
+      -I.                                 \
+      -I"$INC_DIR"                        \
+      -L"$LIB_DIR"                        \
+      -licui18n -licuuc -licudata -licuio \
+      ${EXTRA_LINK:-}                     \
+      -o "$OUT"
+  fi
 
   echo "Built $OUT"
   echo
 }
 
-# Build all four variants (linux/macOS × x86/arm)
-for OS in linux macos; do
+# Build all six variants (linux/macOS/windows × x86/arm)
+for OS in linux macos windows; do
   for ARC in x86 arm; do
     build-test "$OS" "$ARC"
   done
