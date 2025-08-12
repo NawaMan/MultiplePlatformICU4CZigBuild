@@ -25,6 +25,7 @@
 #include <unicode/ures.h>
 #include <unicode/coll.h>
 #include <unicode/resbund.h>
+#include <unicode/stringpiece.h>  // for UnicodeString::fromUTF8
 
 // Example 1: Unicode string operations
 void runStringExample() {
@@ -38,8 +39,8 @@ void runStringExample() {
         return result;
     };
 
-    // Create a Unicode string with multi-language text
-    icu::UnicodeString ustr("Hello, World! こんにちは 你好 مرحبا");
+    // Create a Unicode string with multi-language text (decode as UTF-8 explicitly)
+    icu::UnicodeString ustr = icu::UnicodeString::fromUTF8("Hello, World! こんにちは 你好 مرحبا");
     println("Original string: {}", toString(ustr));
 
     // Get string properties
@@ -112,10 +113,8 @@ void runBreakIteratorExample() {
         return result;
     };
     
-    // Note: This test may have limited functionality in WebAssembly environments
-    
     UErrorCode status = U_ZERO_ERROR;
-    icu::UnicodeString text("Hello, world! This is a test. How are you? 你好，世界！这是一个测试。");
+    icu::UnicodeString text = icu::UnicodeString::fromUTF8("Hello, world! This is a test. How are you? 你好，世界！这是一个测试。");
     
     // Create a sentence break iterator
     std::unique_ptr<icu::BreakIterator> sentenceIterator(
@@ -196,7 +195,7 @@ void runTransliterationExample() {
     }
     
     // Transliterate some text
-    icu::UnicodeString latinText("Privet, mir! Kak dela?");
+    icu::UnicodeString latinText = icu::UnicodeString::fromUTF8("Privet, mir! Kak dela?");
     println("Original text: {}", toString(latinText));
     
     latinToCyrillic->transliterate(latinText);
@@ -245,15 +244,14 @@ void testICUDataBundle() {
     
     // Test 2: Check if we can access collation data (requires coll.dat)
     println("2. Testing collation data...");
-    // Note: This test may have limited functionality in WebAssembly environments
     status = U_ZERO_ERROR;
     std::unique_ptr<icu::Collator> coll(icu::Collator::createInstance(icu::Locale::getUS(), status));
     if (U_SUCCESS(status)) {
         println("   ✅ Collation data accessible");
         
         // Test basic collation functionality
-        icu::UnicodeString str1("apple");
-        icu::UnicodeString str2("banana");
+        icu::UnicodeString str1 = icu::UnicodeString::fromUTF8("apple");
+        icu::UnicodeString str2 = icu::UnicodeString::fromUTF8("banana");
         icu::Collator::EComparisonResult result = coll->compare(str1, str2);
         
         if (result == icu::Collator::LESS) {
@@ -269,7 +267,6 @@ void testICUDataBundle() {
     
     // Test 3: Check if we can access calendar data (requires ucal.dat)
     println("3. Testing calendar data...");
-    // Note: This test may have limited functionality in WebAssembly environments
     status = U_ZERO_ERROR;
     std::unique_ptr<icu::Calendar> cal(icu::Calendar::createInstance(icu::Locale("ja_JP@calendar=japanese"), status));
     if (U_SUCCESS(status)) {
@@ -303,7 +300,6 @@ void testICUDataBundle() {
         udata_close(data);
     } else {
         // Try alternative approach - check if we can get locale display names
-        // which also requires resource data
         status = U_ZERO_ERROR;
         icu::Locale locale("en_US");
         icu::UnicodeString displayName;
@@ -319,7 +315,6 @@ void testICUDataBundle() {
     
     // Test 5: Check if we can access converter data (requires cnv files)
     println("5. Testing converter data...");
-    // Note: This test may have limited functionality in WebAssembly environments
     status = U_ZERO_ERROR;
     UConverter* conv = ucnv_open("Shift-JIS", &status);
     if (U_SUCCESS(status)) {
